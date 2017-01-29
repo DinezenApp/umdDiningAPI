@@ -11,7 +11,8 @@ let Menu = mongoose.model('Menu', {
     date: String,
     meal_name: String,
     menu: [{name: String,
-            recipe: String}]
+            recipe: String,
+            tags: [String]}]
 });
 
 let Nutrition = mongoose.model('Nutrition', {
@@ -25,8 +26,7 @@ let Nutrition = mongoose.model('Nutrition', {
     satfat : String,
     fiber : String,
     transfat : String,
-    sugar : String,
-    cholesterol : String,
+    sugar : String, cholesterol : String,
     protein : String,
     sodium : String,
     calcium : String,
@@ -48,7 +48,12 @@ let scrapeMenu = function(date, locationId, meal, callback) {
             let $ = cheerio.load(body);
             let menu = [];
             $('.longmenucoldispname').each(function(i, elem) {
-                item = {name: $(this).children('a').text(), recipe: $(this).children('input').val()};
+                let tags = $(this).parent().siblings('td').map(function(i, ele) {
+                    let img = $(this).children().first().attr('src');
+                    let regexp = /\w+_([A-Za-z]*)\.gif/g;
+                    return (regexp.exec(img)[1]);
+                });
+                item = {name: $(this).children('a').text(), recipe: $(this).children('input').val(), tags: tags.toArray()};
                 menu.push(item);
             });
             callback(menu);
@@ -197,6 +202,7 @@ app.get('/get_menu.json', function(req, res) {
     }
     console.log("Menu for " +meal + " on " + date + " at " + locationId + " requested");
     getMenu(date, locationId, meal, function(data) {
+        console.log(data);
         res.json(data);
     });
 });
@@ -225,7 +231,7 @@ app.get('/get_full_menu.json', function(req, res) {
         let full = [];
         for(let i = 0; i < menu.length; i++) {
             getNutritionFacts(menu[i].recipe, (data) => {
-                full.push({name: menu[i].name, recipe: menu[i].recipe, nutrition: data});
+                full.push({name: menu[i].name, recipe: menu[i].recipe, tags: menu[i].tags, nutrition: data});
                 numProcessed++;
                 if(numProcessed == menu.length) {
                     res.json(full);
