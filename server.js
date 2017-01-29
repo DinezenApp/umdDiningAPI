@@ -57,12 +57,17 @@ let scrapeMenu = function(date, locationId, meal, callback) {
                         menu.push(area);
                     }
                     let cat = $(this).find('.longmenucolmenucat').first(); 
-                    area = {area: cat.text(), menu: []}
+                    let pattern = /-- (.+) --/;
+                    let text = cat.text();
+                    if(pattern.test(text)) {
+                        text = (pattern.exec(text))[1];
+                    }
+                    area = {area: text, menu: []}
                 } else if($(this).find('.longmenucoldispname').length != 0) {
                     let disp = $(this).find('.longmenucoldispname').first();
                     let tags = disp.parent().siblings('td').map(function(i, ele) {
                         let img = $(this).children().first().attr('src');
-                        let regexp = /\w+_([A-Za-z]*)\.gif/g;
+                        let regexp = /\w+_([A-Za-z]*)\.gif/;
                         return (regexp.exec(img)[1]);
                     });
                     item = {name: disp.children('a').text(), recipe: disp.children('input').val(), tags: tags.toArray()};
