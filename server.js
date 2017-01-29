@@ -10,9 +10,12 @@ let Menu = mongoose.model('Menu', {
     location_id: String,
     date: String,
     meal_name: String,
-    menu: [{name: String,
-            recipe: String,
-            tags: [String]}]
+    menu: [{area: String,
+            menu: [{
+                name: String,
+                recipe: String,
+                tags: [String]}]
+            }]
 });
 
 let Nutrition = mongoose.model('Nutrition', {
@@ -47,14 +50,24 @@ let scrapeMenu = function(date, locationId, meal, callback) {
 	if (!error && response.statusCode == 200) {
             let $ = cheerio.load(body);
             let menu = [];
-            $('.longmenucoldispname').each(function(i, elem) {
-                let tags = $(this).parent().siblings('td').map(function(i, ele) {
-                    let img = $(this).children().first().attr('src');
-                    let regexp = /\w+_([A-Za-z]*)\.gif/g;
-                    return (regexp.exec(img)[1]);
-                });
-                item = {name: $(this).children('a').text(), recipe: $(this).children('input').val(), tags: tags.toArray()};
-                menu.push(item);
+            let area = undefined;
+            $('.longmenugridheader').first().parent().siblings('tr').each(function(i, element) {
+                if($(this).find('.longmenucolmenucat').length != 0) {
+                    if(area != undefined) {
+                        menu.push(area);
+                    }
+                    let cat = $(this).find('.longmenucolmenucat').first(); 
+                    area = {area: cat.text(), menu: []}
+                } else if($(this).find('.longmenucoldispname').length != 0) {
+                    let disp = $(this).find('.longmenucoldispname').first();
+                    let tags = disp.parent().siblings('td').map(function(i, ele) {
+                        let img = $(this).children().first().attr('src');
+                        let regexp = /\w+_([A-Za-z]*)\.gif/g;
+                        return (regexp.exec(img)[1]);
+                    });
+                    item = {name: disp.children('a').text(), recipe: disp.children('input').val(), tags: tags.toArray()};
+                    area.menu.push(item);
+                }
             });
             callback(menu);
 	} else {
@@ -202,7 +215,6 @@ app.get('/get_menu.json', function(req, res) {
     }
     console.log("Menu for " +meal + " on " + date + " at " + locationId + " requested");
     getMenu(date, locationId, meal, function(data) {
-        console.log(data);
         res.json(data);
     });
 });
