@@ -245,19 +245,20 @@ app.get('/get_full_menu.json', function(req, res) {
     console.log("Full menu for " +meal + " on " + date + " at " + locationId + " requested");
     getMenu(date, locationId, meal, (menu) => {
         let numProcessed = 0;
-        //let full = [];
-        for(let i = 0; i < menu.length; i++) {
-            for(let j = 0; j < menu[i].menu.length; j++) {
-                getNutritionFacts(menu[i].menu[j].recipe, (data) => {
-                    //full.push({name: menu[i].menu[j].name, recipe: menu[i].menu[j].recipe, tags: menu[i].menu[j].tags, nutrition: data});
-                    menu[i].menu[j].nutrition = data;
+        let full = [];
+        menu.forEach((area) => {
+            let areaJson= {area: area.area, menu: []}
+            full.push(areaJson);
+            area.menu.forEach((menuItem) => {
+                getNutritionFacts(menuItem.recipe, (data) => {
+                    areaJson.menu.push({name: menuItem.name, recipe: menuItem.recipe, tags: menuItem.tags, nutrition: data});
                     numProcessed++;
                     if(numProcessed == menu.length) {
-                        res.json(menu);
+                        res.json(full);
                     }
                 });
-            }
-        }
+            });
+        });
     });
 });
 
