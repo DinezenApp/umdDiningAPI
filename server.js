@@ -266,6 +266,11 @@ app.get('/get_full_menu.json', function(req, res) {
     });
 });
 
+app.get('/get_all_items.json', function(req, res) {
+    Nutrition.find({}, "name recipe", function(err, items){
+        res.json(items);
+    });
+});
 app.listen(8080, function() {
     console.log("Server started on port 8080");
 });
