@@ -244,6 +244,10 @@ app.get('/get_full_menu.json', function(req, res) {
     }
     console.log("Full menu for " +meal + " on " + date + " at " + locationId + " requested");
     getMenu(date, locationId, meal, (menu) => {
+        if(menu.length == 0) {
+            res.json([]);
+            return;
+        }
         let numProcessed = 0;
         let total = 0;
         for(let a = 0; a < menu.length; a++) {
