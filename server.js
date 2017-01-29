@@ -245,6 +245,10 @@ app.get('/get_full_menu.json', function(req, res) {
     console.log("Full menu for " +meal + " on " + date + " at " + locationId + " requested");
     getMenu(date, locationId, meal, (menu) => {
         let numProcessed = 0;
+        let total = 0;
+        for(let a = 0; a < menu.length; a++) {
+            total += menu[a].menu.length;
+        }
         let full = [];
         menu.forEach((area) => {
             let areaJson= {area: area.area, menu: []}
@@ -253,7 +257,7 @@ app.get('/get_full_menu.json', function(req, res) {
                 getNutritionFacts(menuItem.recipe, (data) => {
                     areaJson.menu.push({name: menuItem.name, recipe: menuItem.recipe, tags: menuItem.tags, nutrition: data});
                     numProcessed++;
-                    if(numProcessed == menu.length) {
+                    if(numProcessed == total) {
                         res.json(full);
                     }
                 });
