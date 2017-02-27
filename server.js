@@ -5,7 +5,19 @@ let mongoose = require('mongoose');
 let request = require('request');
 let cheerio = require('cheerio');
 
-mongoose.connect('mongodb://localhost/food');
+app.set('port', process.env.PORT || 3000);
+
+/**
+ * Connect to MongoDB.
+ */
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI);
+mongoose.connection.on('error', () => {
+  console.log('MongoDB connection error. Please make sure MongoDB is running.');
+  process.exit();
+});
+
+
+// mongoose.connect('mongodb://localhost/food');
 let Menu = mongoose.model('Menu', {
     location_id: String,
     date: String,
@@ -275,7 +287,6 @@ app.get('/get_all_items.json', function(req, res) {
         res.json(items);
     });
 });
-app.set('port', process.env.PORT || 3000);
 app.listen(app.get('port'), () => {
   console.log('App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env')); 
   console.log('  Press CTRL-C to stop\n');
