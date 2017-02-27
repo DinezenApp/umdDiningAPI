@@ -56,7 +56,7 @@ let scrapeMenu = function(date, locationId, meal, callback) {
                     if(area != undefined) {
                         menu.push(area);
                     }
-                    let cat = $(this).find('.longmenucolmenucat').first(); 
+                    let cat = $(this).find('.longmenucolmenucat').first();
                     let pattern = /-- (.+) --/;
                     let text = cat.text();
                     if(pattern.test(text)) {
@@ -104,7 +104,7 @@ let getMenu = function(date, locationId, meal, callback) {
 };
 
 //let scrapeMenu = function(date, locationId, meal, callback) {
-//    
+//
 //    scrapeRecipeIds(date, locationId, meal, function(recipeIds){
 //        let body = 'Action=';
 //        for(i in recipeIds) {
@@ -134,7 +134,7 @@ let getMenu = function(date, locationId, meal, callback) {
 //                //let portion = $(this).parent().next().children('.nutrptportions').text();
 //                //let calories = $(this).parent().next().next().next().children('.nutrptvalues').text();
 //            });
-//            
+//
 //            let menuJson = {
 //                location_id: locationId,
 //                date: date,
@@ -201,7 +201,7 @@ let scrapeNutritionFacts = function(recipeId, callback) {
                 ingredients : $('.labelingredientsvalue').text(),
                 allergens : $('.labelallergensvalue').text()
             };
-            
+
             callback(facts);
         }
     });
@@ -275,6 +275,7 @@ app.get('/get_all_items.json', function(req, res) {
         res.json(items);
     });
 });
-app.listen(8080, function() {
-    console.log("Server started on port 8080");
+app.listen(app.get('port'), () => {
+  console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env')); 
+  console.log('  Press CTRL-C to stop\n');
 });
