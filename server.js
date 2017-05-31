@@ -10,13 +10,13 @@ app.set('port', process.env.PORT || 3000);
 /**
  * Connect to MongoDB.
  */
-mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI);
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || 'mongodb://localhost');
 mongoose.connection.on('error', () => {
-  console.log('MongoDB connection error. Please make sure MongoDB is running.');
+  console.log('MongoDB connection error. Please make sure MongoDB is running on ' + process.env.MONGODB_URI || process.env.MONGOLAB_URI + '.');
   process.exit();
 });
 
-var allowCrossDomain = function(req, res, next) {
+function allowCrossDomain(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
@@ -31,8 +31,6 @@ var allowCrossDomain = function(req, res, next) {
 };
 app.use(allowCrossDomain);
 
-
-// mongoose.connect('mongodb://localhost/food');
 let Menu = mongoose.model('Menu', {
     location_id: String,
     date: String,
@@ -56,7 +54,8 @@ let Nutrition = mongoose.model('Nutrition', {
     satfat : String,
     fiber : String,
     transfat : String,
-    sugar : String, cholesterol : String,
+    sugar : String,
+    cholesterol : String,
     protein : String,
     sodium : String,
     calcium : String,
@@ -67,8 +66,7 @@ let Nutrition = mongoose.model('Nutrition', {
 app.use(bodyParser.urlencoded({ extended: true}));
 app.use(bodyParser.json());
 
-let scrapeMenu = function(date, locationId, meal, callback) {
-    //let dateString = ('0' + date.getMonth()+1).slice(-2) + '/' + ('0' + (date.getDate())).slice(-2) + '/' + date.getFullYear();
+function scrapeMenu(date, locationId, meal, callback) {
     let url = 'http://nutrition.umd.edu/longmenu.aspx?locationNum='+locationId+'&dtdate='+date+'&mealName='+meal;
     let headers = {
         'Cookie' : 'WebInaCartLocation=04; WebInaCartDates=; WebInaCartMeals=; WebInaCartRecipes=; WebInaCartQtys='
@@ -109,7 +107,7 @@ let scrapeMenu = function(date, locationId, meal, callback) {
     });
 };
 
-let getMenu = function(date, locationId, meal, callback) {
+function getMenu(date, locationId, meal, callback) {
     Menu.findOne({date: date, location_id: locationId, meal_name: meal}, "menu", function(err, menu){
         let ret;
         if(menu == null){
@@ -130,51 +128,7 @@ let getMenu = function(date, locationId, meal, callback) {
     });
 };
 
-//let scrapeMenu = function(date, locationId, meal, callback) {
-//
-//    scrapeRecipeIds(date, locationId, meal, function(recipeIds){
-//        let body = 'Action=';
-//        for(i in recipeIds) {
-//            body += '&recipe='+recipeIds[i]+'&QTY=1';
-//        }
-//        let dateString = ('0' + date.getMonth()+1).slice(-2) + '/'
-//                         + ('0' + (date.getDate())).slice(-2) + '/'
-//                         + date.getFullYear();
-//        let url = 'http://nutrition.umd.edu/nutRpt.aspx?locationNum='+locationId+'&dtdate='+dateString+'&mealName='+meal;
-//        request.post({
-//            headers: {
-//                    'content-type':'application/x-www-form-urlencoded',
-//                    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-//                    'referer': 'http://nutrition.umd.edu/longmenu.aspx?sName=%3cfont+style%3d%22color%3aRed%22%3eDining+%40+Maryland%3c%2ffont%3e&locationNum=04&locationName=%3cfont+style%3d%22color%3aRed%22%3eThe+Diner%3c%2ffont%3e&naFlag=1&WeeksMenus=This+Week%27s+Menus&dtdate=01%2f28%2f2017&mealName=Lunch',
-//                    'accept-encoding': 'gzip, deflate',
-//                    'accept-language': 'en-US,en;q=0.8',
-//                    'cookie': 'WebInaCartLocation='+locationId+'; WebInaCartDates=; WebInaCartMeals=; WebInaCartRecipes=; WebInaCartQtys='
-//            },
-//            url: url,
-//            body: body
-//        }, function(error, response, body) {
-//            let $ = cheerio.load(body);
-//            let foods = [];
-//            $('.nutrptnames').each(function(i, element) {
-//                let name = $(this).children('a').text();
-//                foods.push(name);
-//                //let portion = $(this).parent().next().children('.nutrptportions').text();
-//                //let calories = $(this).parent().next().next().next().children('.nutrptvalues').text();
-//            });
-//
-//            let menuJson = {
-//                location_id: locationId,
-//                date: date,
-//                meal_name: meal,
-//                menu: foods
-//            };
-//            callback(menuJson);
-//        });
-//    });
-//};
-
-
-let getNutritionFacts = function(recipeId, callback) {
+function getNutritionFacts(recipeId, callback) {
     Nutrition.findOne({recipe: recipeId}, function(err, facts){
         if(facts == null){
             scrapeNutritionFacts(recipeId, function(res) {
@@ -198,7 +152,7 @@ let getNutritionFacts = function(recipeId, callback) {
     });
 };
 
-let scrapeNutritionFacts = function(recipeId, callback) {
+function scrapeNutritionFacts(recipeId, callback) {
     let url = 'http://nutrition.umd.edu/label.aspx?RecNumAndPort='+recipeId;
     request(url, function (error, response, body) {
         let $ = cheerio.load(body);
