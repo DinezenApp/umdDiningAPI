@@ -10,7 +10,7 @@ app.set('port', process.env.PORT || 3000);
 /**
  * Connect to MongoDB.
  */
-mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || 'mongodb://localhost');
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || 'mongodb://localhost/dinezen');
 mongoose.connection.on('error', () => {
   console.log('MongoDB connection error. Please make sure MongoDB is running on ' + process.env.MONGODB_URI || process.env.MONGOLAB_URI + '.');
   process.exit();
@@ -46,19 +46,19 @@ let Menu = mongoose.model('Menu', {
 let Nutrition = mongoose.model('Nutrition', {
     name : String,
     recipe: String,
-    portion : String,
-    calories : String,
-    fatcalories : String,
-    totalfat : String,
-    carb : String,
-    satfat : String,
-    fiber : String,
-    transfat : String,
-    sugar : String,
-    cholesterol : String,
-    protein : String,
-    sodium : String,
-    calcium : String,
+    portionnum : Number,
+    portionunits : String,
+    calories : Number,
+    fatcalories : Number,
+    totalfat : Number,
+    carb : Number,
+    satfat : Number,
+    fiber : Number,
+    transfat : Number,
+    sugar : Number,
+    cholesterol : Number,
+    protein : Number,
+    sodium : Number,
     ingredients : String,
     allergens : String
 });
@@ -140,7 +140,7 @@ function getNutritionFacts(recipeId, callback) {
                         if(err) {
                             console.log(err);
                         }else {
-                            console.log("Nutrition facts for " + res['name'] + " saved");
+                            console.log("Nutrition facts for " + res['name'] + "(" + recipeId + ")" + " saved");
                         }
                     });
                     callback(res);
@@ -159,30 +159,30 @@ function scrapeNutritionFacts(recipeId, callback) {
         if($('.labelnotavailable').length != 0) {
             callback(null);
         } else {
-            let table = $('table > tr > td > table').first().children('tr');
-            let calciumsplit = table.eq(6).find('font').eq(1).text().split('\xa0');
+            let table = $('table > tbody > tr > td > table > tbody').first().children('tr');
+
+            let portionsplit = table.eq(0).children('td').first().children('font').eq(2).text().split(' ');
             let caloriessplit = table.eq(0).children('td').first().children('font').eq(3).text().split('\xa0');
             let fatcaloriessplit = table.eq(0).children('td').first().children('font').eq(4).text().split('\xa0');
             let facts = {
                 name : $('.labelrecipe').text(),
                 recipe: recipeId,
-                portion : table.eq(0).children('td').first().children('font').eq(2).text(),
-                calories : caloriessplit[caloriessplit.length-1],
-                fatcalories : fatcaloriessplit[fatcaloriessplit.length-1],
-                totalfat : table.eq(1).children('td').first().children('font').eq(1).text(),
-                carb : table.eq(1).children('td').eq(2).children('font').eq(1).text(),
-                satfat : table.eq(2).children('td').first().children('font').eq(1).text(),
-                fiber : table.eq(2).children('td').eq(2).children('font').eq(1).text(),
-                transfat : table.eq(3).children('td').first().children('font').eq(1).text(),
-                sugar : table.eq(3).children('td').eq(2).children('font').eq(1).text(),
-                cholesterol : table.eq(4).children('td').first().children('font').eq(1).text(),
-                protein : table.eq(4).children('td').eq(2).children('font').eq(1).text(),
-                sodium : table.eq(5).children('td').first().children('font').eq(1).text(),
-                calcium : calciumsplit[calciumsplit.length-1],
+                portionnum : parseFloat(portionsplit[0]),
+                portionunits : portionsplit[1],
+                calories : parseInt(caloriessplit[caloriessplit.length-1]),
+                fatcalories : parseInt(fatcaloriessplit[fatcaloriessplit.length-1]),
+                totalfat : parseFloat(table.eq(1).children('td').first().children('font').eq(1).text()),
+                carb : parseFloat(table.eq(1).children('td').eq(2).children('font').eq(1).text()),
+                satfat : parseFloat(table.eq(2).children('td').first().children('font').eq(1).text()),
+                fiber : parseFloat(table.eq(2).children('td').eq(2).children('font').eq(1).text()),
+                transfat : parseFloat(table.eq(3).children('td').first().children('font').eq(1).text()),
+                sugar : parseFloat(table.eq(3).children('td').eq(2).children('font').eq(1).text()),
+                cholesterol : parseFloat(table.eq(4).children('td').first().children('font').eq(1).text()),
+                protein : parseFloat(table.eq(4).children('td').eq(2).children('font').eq(1).text()),
+                sodium : parseFloat(table.eq(5).children('td').first().children('font').eq(1).text()),
                 ingredients : $('.labelingredientsvalue').text(),
                 allergens : $('.labelallergensvalue').text()
             };
-
             callback(facts);
         }
     });
@@ -257,6 +257,6 @@ app.get('/get_all_items.json', function(req, res) {
     });
 });
 app.listen(app.get('port'), () => {
-  console.log('App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env')); 
+  console.log('App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env'));
   console.log('  Press CTRL-C to stop\n');
 });
