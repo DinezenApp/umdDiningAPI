@@ -60,7 +60,7 @@ let Nutrition = mongoose.model('Nutrition', {
     protein : Number,
     sodium : Number,
     ingredients : String,
-    allergens : String
+    allergens : [String]
 });
 
 app.use(bodyParser.urlencoded({ extended: true}));
@@ -181,7 +181,7 @@ function scrapeNutritionFacts(recipeId, callback) {
                 protein : parseFloat(table.eq(4).children('td').eq(2).children('font').eq(1).text()),
                 sodium : parseFloat(table.eq(5).children('td').first().children('font').eq(1).text()),
                 ingredients : $('.labelingredientsvalue').text(),
-                allergens : $('.labelallergensvalue').text()
+                allergens : $('.labelallergensvalue').text().split("/[ ,]+/")
             };
             callback(facts);
         }
