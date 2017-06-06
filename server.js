@@ -164,22 +164,24 @@ function scrapeNutritionFacts(recipeId, callback) {
             let portionsplit = table.eq(0).children('td').first().children('font').eq(2).text().split(' ');
             let caloriessplit = table.eq(0).children('td').first().children('font').eq(3).text().split('\xa0');
             let fatcaloriessplit = table.eq(0).children('td').first().children('font').eq(4).text().split('\xa0');
+            //Fallback value if number can not be parsed/does not exist
+            let defaultVal = null;
             let facts = {
                 name : $('.labelrecipe').text(),
                 recipe: recipeId,
-                portionnum : parseFloat(portionsplit[0]),
+                portionnum : parseFloat(portionsplit[0]) || defaultVal,
                 portionunits : portionsplit[1],
-                calories : parseInt(caloriessplit[caloriessplit.length-1]),
-                fatcalories : parseInt(fatcaloriessplit[fatcaloriessplit.length-1]),
-                totalfat : parseFloat(table.eq(1).children('td').first().children('font').eq(1).text()),
-                carb : parseFloat(table.eq(1).children('td').eq(2).children('font').eq(1).text()),
-                satfat : parseFloat(table.eq(2).children('td').first().children('font').eq(1).text()),
-                fiber : parseFloat(table.eq(2).children('td').eq(2).children('font').eq(1).text()),
-                transfat : parseFloat(table.eq(3).children('td').first().children('font').eq(1).text()),
-                sugar : parseFloat(table.eq(3).children('td').eq(2).children('font').eq(1).text()),
-                cholesterol : parseFloat(table.eq(4).children('td').first().children('font').eq(1).text()),
-                protein : parseFloat(table.eq(4).children('td').eq(2).children('font').eq(1).text()),
-                sodium : parseFloat(table.eq(5).children('td').first().children('font').eq(1).text()),
+                calories : parseInt(caloriessplit[caloriessplit.length-1]) || defaultVal,
+                fatcalories : parseInt(fatcaloriessplit[fatcaloriessplit.length-1]) || defaultVal,
+                totalfat : parseFloat(table.eq(1).children('td').first().children('font').eq(1).text()) || defaultVal,
+                carb : parseFloat(table.eq(1).children('td').eq(2).children('font').eq(1).text()) || defaultVal,
+                satfat : parseFloat(table.eq(2).children('td').first().children('font').eq(1).text()) || defaultVal,
+                fiber : parseFloat(table.eq(2).children('td').eq(2).children('font').eq(1).text()) || defaultVal,
+                transfat : parseFloat(table.eq(3).children('td').first().children('font').eq(1).text()) || defaultVal,
+                sugar : parseFloat(table.eq(3).children('td').eq(2).children('font').eq(1).text()) || defaultVal,
+                cholesterol : parseFloat(table.eq(4).children('td').first().children('font').eq(1).text()) || defaultVal,
+                protein : parseFloat(table.eq(4).children('td').eq(2).children('font').eq(1).text()) || defaultVal,
+                sodium : parseFloat(table.eq(5).children('td').first().children('font').eq(1).text()) || defaultVal,
                 ingredients : $('.labelingredientsvalue').text(),
                 allergens : $('.labelallergensvalue').text().split("/[ ,]+/")
             };
