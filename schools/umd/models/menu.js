@@ -1,16 +1,24 @@
 let mongoose = require('mongoose');
 
-let Menu = mongoose.Schema({
-    _id: String,
+let areaMenuSchema = mongoose.Schema({
+    name: String,
+    recipe: String,
+    tags: [String]
+}, {_id: false});
+
+let areaSchema = mongoose.Schema({
+    area: String,
+    menu: [areaMenuSchema]
+}, {_id: false});
+
+let menuSchema = mongoose.Schema({
+    id: String,
     location: String,
     date: String,
     meal: String,
-    menu: [{area: String,
-            menu: [{
-                name: String,
-                recipe: String,
-                tags: [String]}]
-            }]
-});
+    menu: [areaSchema]
+}, {_id: false});
 
-module.exports = Menu;
+menuSchema.index({id: 1});
+
+module.exports = menuSchema;

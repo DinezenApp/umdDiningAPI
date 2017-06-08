@@ -24,11 +24,11 @@ app.use(bodyParser.urlencoded({ extended: true}));
 app.use(bodyParser.json());
 
 function getMenu(school, date, location, meal, callback) {
-        schools[school].db.Menu.findOne({_id: getMenuId(date, meal, location)}, "menu", function(err, menu){
+    schools[school].db.Menu.findOne({id: getMenuId(date, meal, location)}, function(err, menu){
         let ret;
         if(menu == null){
             schools[school].scraper.scrapeMenu(date, location, meal, function(res) {
-                let entry = new schools[school].db.Menu({_id: getMenuId(date, location, meal), location: location, date: date, meal: meal, menu: res});
+                let entry = new schools[school].db.Menu({id: getMenuId(date, location, meal), location: location, date: date, meal: meal, menu: res});
                 entry.save(new function(err) {
                     if(err) {
                         console.log(err);
@@ -44,14 +44,13 @@ function getMenu(school, date, location, meal, callback) {
     });};
 
 function getNutritionFacts(school, recipeId, callback) {
-    schools[school].db.Nutrition.findOne({_id: recipeId}, function(err, facts){
+    schools[school].db.Nutrition.findOne({recipe: recipeId}, {'_id': 0}, function(err, facts){
         if(facts == null){
             schools[school].scraper.scrapeNutritionFacts(recipeId, function(res) {
                 if(res == null) {
                     callback(null);
                 } else {
                     let entry = new schools[school].db.Nutrition(res);
-                    entry._id = recipeId;
                     entry.save(new function(err) {
                         if(err) {
                             console.log(err);
@@ -73,7 +72,7 @@ function getMenuId(date, meal, location) {
 }
 
 app.get('/', function(req, res) {
-    res.send("Welcome to the UMD Dining Service API!");
+    res.sendFile('index.html', { root: __dirname});
 });
 
 app.get('/get_menu.json', function(req, res) {
@@ -90,7 +89,7 @@ app.get('/get_menu.json', function(req, res) {
 });
 
 app.get('/get_nutrition.json', function(req, res) {
-    let recipeId = req.query.recipe;
+    let recipeId = req.query.id;
     if(recipeId == null) {
         res.send("Invalid Parameters");
     }
@@ -104,12 +103,26 @@ app.get('/get_full_menu.json', function(req, res) {
     let location = req.query.location;
     let date = req.query.date;
     let meal = req.query.meal;
-    if(location == null || date == undefined || meal == undefined) {
-        res.send("Invalid Parameters");
+    if(location == null) {
+        res.send("A location must be specified");
+        return;
+    }
+    if(date == undefined) {
+        res.send("A date must be specified");
+        return;
+    }
+    if(meal == undefined) {
+        res.send("A meal must be specified");
         return;
     }
     console.log("Full menu for " +meal + " on " + date + " at " + location + " requested");
+    //TODO store full menus to prevent building on each request
     getMenu('umd', date, location, meal, (menu) => {
+        if(!meal.constructor === Array) {
+            console.log(menu);
+            res.send(menu);
+            return;
+        }
         if(menu.length == 0) {
             res.json([]);
             return;

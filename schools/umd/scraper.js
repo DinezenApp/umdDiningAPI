@@ -1,9 +1,28 @@
 let request = require('request');
 let cheerio = require('cheerio');
 
+let locations = {
+    '0': '04',//NCD
+    '1': '16',//SCD
+    '2': '51'//241
+}
 
-function scrapeMenu(date, locationId, meal, callback) {
-    let url = 'http://nutrition.umd.edu/longmenu.aspx?locationNum='+locationId+'&dtdate='+date+'&mealName='+meal;
+let meals = {
+    '0': 'Breakfast',
+    '1': 'Lunch',
+    '2': 'Dinner'
+}
+
+function scrapeMenu(date, location, meal, callback) {
+    if(!locations[location]) {
+        callback("Invalid location code");
+        return;
+    }
+    if(!meals[meal]) {
+        callback("Invalid meal code");
+        return;
+    }
+    let url = 'http://nutrition.umd.edu/longmenu.aspx?locationNum='+locations[location]+'&dtdate='+date+'&mealName='+meals[meal];
     let headers = {
         'Cookie' : 'WebInaCartLocation=04; WebInaCartDates=; WebInaCartMeals=; WebInaCartRecipes=; WebInaCartQtys='
     };

@@ -1,7 +1,7 @@
 let mongoose = require('mongoose');
 
-let Nutrition = mongoose.Schema({
-    _id: String,
+let nutritionSchema = mongoose.Schema({
+    recipe: String,
     name : String,
     portionnum : Number,
     portionunits : String,
@@ -20,4 +20,6 @@ let Nutrition = mongoose.Schema({
     allergens : [String]
 });
 
-module.exports = Nutrition;
+nutritionSchema.index({recipe: 1});
+
+module.exports = nutritionSchema;
