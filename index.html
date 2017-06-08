@@ -1,0 +1,44 @@
+<html>
+<head>
+    <title>Dinezen API</title>
+    <style>
+    table {border-collapse: collapse;}
+    table, th, td {border: 1px black solid;}
+    </style>
+</head>
+
+<body>
+    <h1>Dinezen API</h1>
+    <h3>Endpoints:</h3>
+    <ul>
+        <li><strong>Menu:</strong> <code>/get_menu.json?location=...&date=...$meal=...</code></li>
+        <li><strong>Full Menu:</strong> <code>/get_full_menu.json?location=...&date=...$meal=...</code></li>
+        <li><strong>Nutrition Information:</strong> <code>/get_nutrition.json?id=...</code></li>
+        <li><strong>All Items:</strong> <code>/get_all_items.json?id=...</code></li>
+    </ul>
+    <h4>UMD</h4>
+    <table>
+    <tbody>
+    <tr><th>Location</th><th>ID</th></tr>
+    <tr><td>North Campus Dining Hall</td><td>0</td></tr>
+    <tr><td>South Campus Dining Hall</td><td>1</td></tr>
+    <tr><td>251 North</td><td>2</td></tr>
+    </tbody>
+    </table>
+    
+    <br/>
+    
+    <table>
+    <tbody>
+    <tr><th>Meal</th><th>ID</th></tr>
+    <tr><td>Breakfast</td><td>0</td></tr>
+    <tr><td>Lunch</td><td>1</td></tr>
+    <tr><td>Dinner</td><td>2</td></tr>
+    </tbody>
+    </table>
+    <br/><br/>
+    <a href="/admin">Administration</a>
+    
+    
+</body>
+</html>
