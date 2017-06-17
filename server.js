@@ -18,30 +18,37 @@ function allowCrossDomain(req, res, next) {
     else {
       next();
     }
-};
+}
 app.use(allowCrossDomain);
 app.use(bodyParser.urlencoded({ extended: true}));
 app.use(bodyParser.json());
 
 function getMenu(school, date, location, meal, callback) {
     schools[school].db.Menu.findOne({id: getMenuId(date, meal, location)}, function(err, menu){
+        if(err) {
+            console.log(err);
+            res.send(err);
+            return;
+        }
         let ret;
         if(menu == null){
             schools[school].scraper.scrapeMenu(date, location, meal, function(res) {
-                let entry = new schools[school].db.Menu({id: getMenuId(date, location, meal), location: location, date: date, meal: meal, menu: res});
-                entry.save(new function(err) {
+                let entry = new schools[school].db.Menu({id: getMenuId(date, meal, location), location: location, date: date, meal: meal, menu: res});
+                entry.save(function(err) {
                     if(err) {
                         console.log(err);
-                    }else {
+                        callback(err, null);
+                    } else {
                         console.log("Menu for " + meal + " on " + date + " at " + location + " saved");
+                        callback(null, res);
                     }
                 });
-                callback(res);
             });
         } else {
-            callback(menu['menu']);
+            callback(null, menu['menu']);
         }
-    });};
+    });
+}
 
 function getNutritionFacts(school, recipeId, callback) {
     schools[school].db.Nutrition.findOne({recipe: recipeId}, {'_id': 0}, function(err, facts){
@@ -51,21 +58,22 @@ function getNutritionFacts(school, recipeId, callback) {
                     callback(null);
                 } else {
                     let entry = new schools[school].db.Nutrition(res);
-                    entry.save(new function(err) {
+                    entry.save(function(err) {
                         if(err) {
                             console.log(err);
+                            callback(err, null);
                         }else {
                             console.log("Nutrition facts for " + res['name'] + "(" + recipeId + ")" + " saved");
+                            callback(null, res);
                         }
                     });
-                    callback(res);
                 }
             });
         } else {
-            callback(facts);
+            callback(null, facts);
         }
     });
-};
+}
 
 function getMenuId(date, meal, location) {
     return date+"|"+meal+"|"+location;
@@ -83,8 +91,12 @@ app.get('/get_menu.json', function(req, res) {
         res.send("Invalid Parameters");
     }
     console.log("Menu for " +meal + " on " + date + " at " + location + " requested");
-    getMenu('umd', date, location, meal, function(data) {
-        res.json(data);
+    getMenu('umd', date, location, meal, function(err, data) {
+        if(err) {
+            res.send(err);
+        } else {
+            res.json(data);
+        }
     });
 });
 
@@ -94,9 +106,12 @@ app.get('/get_nutrition.json', function(req, res) {
         res.send("Invalid Parameters");
     }
     console.log("Nutrition info for " + recipeId + " requested");
-    getNutritionFacts('umd', recipeId, function(data) {
-        res.json(data);
-    });
+    getNutritionFacts('umd', recipeId, function(err, data) {
+        if(err) {
+            res.send(err);
+        } else {
+            res.json(data);
+        }    });
 });
 
 app.get('/get_full_menu.json', function(req, res) {
@@ -115,12 +130,11 @@ app.get('/get_full_menu.json', function(req, res) {
         res.send("A meal must be specified");
         return;
     }
-    console.log("Full menu for " +meal + " on " + date + " at " + location + " requested");
+    console.log("Full menu for " + meal + " on " + date + " at " + location + " requested");
     //TODO store full menus to prevent building on each request
-    getMenu('umd', date, location, meal, (menu) => {
-        if(!meal.constructor === Array) {
-            console.log(menu);
-            res.send(menu);
+    getMenu('umd', date, location, meal, (err, menu) => {
+        if(err) {
+            res.send(err);
             return;
         }
         if(menu.length == 0) {
@@ -137,7 +151,11 @@ app.get('/get_full_menu.json', function(req, res) {
             let areaJson= {area: area.area, menu: []}
             full.push(areaJson);
             area.menu.forEach((menuItem) => {
-                getNutritionFacts('umd', menuItem.recipe, (data) => {
+                getNutritionFacts('umd', menuItem.recipe, (err, data) => {
+                    if(err) {
+                        //Nutrition could not be retrieved
+                        console.log(err);
+                    }
                     areaJson.menu.push({name: menuItem.name, recipe: menuItem.recipe, tags: menuItem.tags, nutrition: data});
                     numProcessed++;
                     if(numProcessed == total) {

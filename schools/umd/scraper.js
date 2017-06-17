@@ -27,7 +27,7 @@ function scrapeMenu(date, location, meal, callback) {
         'Cookie' : 'WebInaCartLocation=04; WebInaCartDates=; WebInaCartMeals=; WebInaCartRecipes=; WebInaCartQtys='
     };
     request({url: url, headers: headers}, function (error, response, body) {
-	if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode == 200) {
             let $ = cheerio.load(body);
             let menu = [];
             let area = undefined;
@@ -55,7 +55,7 @@ function scrapeMenu(date, location, meal, callback) {
                 }
             });
             callback(menu);
-	} else {
+        } else {
             console.log("ERROR: " + error);
             callback("ERROR");
         }

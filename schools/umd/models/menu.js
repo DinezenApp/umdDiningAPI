@@ -17,7 +17,7 @@ let menuSchema = mongoose.Schema({
     date: String,
     meal: String,
     menu: [areaSchema]
-}, {_id: false});
+});
 
 menuSchema.index({id: 1});
 
