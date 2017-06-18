@@ -1,8 +1,6 @@
 let mongoose = require('mongoose');
 
-let nutritionSchema = mongoose.Schema({
-    recipe: String,
-    name : String,
+let factsSchema = mongoose.Schema({
     portionnum : Number,
     portionunits : String,
     calories : Number,
@@ -18,6 +16,12 @@ let nutritionSchema = mongoose.Schema({
     sodium : Number,
     ingredients : String,
     allergens : [String]
+}, {_id: false});
+
+let nutritionSchema = mongoose.Schema({
+    recipe: String,
+    name: String,
+    facts: factsSchema
 });
 
 nutritionSchema.index({recipe: 1});

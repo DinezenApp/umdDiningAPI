@@ -3,6 +3,7 @@ let app = express();
 let bodyParser = require('body-parser');
 let mongoose = require('mongoose');
 let schools = require('./schools');
+let reporter = require('./analytics/reporter');
 
 app.set('port', process.env.PORT || 3000);
 
@@ -24,22 +25,30 @@ app.use(bodyParser.urlencoded({ extended: true}));
 app.use(bodyParser.json());
 
 function getMenu(school, date, location, meal, callback) {
-    schools[school].db.Menu.findOne({id: getMenuId(date, meal, location)}, function(err, menu){
+    schools[school].db.Menu.findOne({id: getMenuId(date, meal, location)}, {'_id': 0}, function(err, menu){
         if(err) {
-            console.log(err);
-            res.send(err);
+            reporter.reportDbError(school, err);
+            calllback("An internal error occurred (db0001)", null);
             return;
         }
         let ret;
         if(menu == null){
-            schools[school].scraper.scrapeMenu(date, location, meal, function(res) {
+            schools[school].scraper.scrapeMenu(date, location, meal, function(err, res) {
+                if(err) {
+                    reporter.reportMenuError('umd', date, meal, location, err);
+                    callback(err, null);
+                    return;
+                }
                 let entry = new schools[school].db.Menu({id: getMenuId(date, meal, location), location: location, date: date, meal: meal, menu: res});
                 entry.save(function(err) {
                     if(err) {
-                        console.log(err);
+                        reporter.reportMenuError('umd', date, meal, location, err);
                         callback(err, null);
                     } else {
                         console.log("Menu for " + meal + " on " + date + " at " + location + " saved");
+                        if(res == null) {
+                            reporter.reportMenuError('umd', date, meal, location, "null menu");
+                        }
                         callback(null, res);
                     }
                 });
@@ -52,22 +61,32 @@ function getMenu(school, date, location, meal, callback) {
 
 function getNutritionFacts(school, recipeId, callback) {
     schools[school].db.Nutrition.findOne({recipe: recipeId}, {'_id': 0}, function(err, facts){
+        if(err) {
+            reporter.reportDbError(school, err);
+            callback("An internal error occurred (db0002)", null);
+            return;
+        }
         if(facts == null){
-            schools[school].scraper.scrapeNutritionFacts(recipeId, function(res) {
-                if(res == null) {
-                    callback(null);
-                } else {
-                    let entry = new schools[school].db.Nutrition(res);
-                    entry.save(function(err) {
-                        if(err) {
-                            console.log(err);
-                            callback(err, null);
-                        }else {
-                            console.log("Nutrition facts for " + res['name'] + "(" + recipeId + ")" + " saved");
-                            callback(null, res);
-                        }
-                    });
+            schools[school].scraper.scrapeNutritionFacts(recipeId, function(err, res) {
+                if(err) {
+                    reporter.reportNutritionError('umd', recipeId, err);
+                    callback(err, null);
+                    return;
                 }
+                let entry = new schools[school].db.Nutrition(res);
+                entry.save(function(err) {
+                    if(err) {
+                        reporter.reportNutritionError('umd', recipeId, err);
+                        callback(err, null);
+                    }else {                        
+                        if(res == null) {
+                            reporter.reportNutritionError('umd', recipeId, "Null nutrition information");
+                        } else {
+                            console.log("Nutrition facts for " + res['name'] + "(" + recipeId + ")" + " saved");
+                        }
+                        callback(null, res);
+                    }
+                });  
             });
         } else {
             callback(null, facts);
@@ -111,7 +130,8 @@ app.get('/get_nutrition.json', function(req, res) {
             res.send(err);
         } else {
             res.json(data);
-        }    });
+        }       
+    });
 });
 
 app.get('/get_full_menu.json', function(req, res) {
@@ -137,7 +157,7 @@ app.get('/get_full_menu.json', function(req, res) {
             res.send(err);
             return;
         }
-        if(menu.length == 0) {
+        if(!menu || menu.length == 0) {
             res.json([]);
             return;
         }
@@ -152,11 +172,8 @@ app.get('/get_full_menu.json', function(req, res) {
             full.push(areaJson);
             area.menu.forEach((menuItem) => {
                 getNutritionFacts('umd', menuItem.recipe, (err, data) => {
-                    if(err) {
-                        //Nutrition could not be retrieved
-                        console.log(err);
-                    }
-                    areaJson.menu.push({name: menuItem.name, recipe: menuItem.recipe, tags: menuItem.tags, nutrition: data});
+                    let facts = data==null? null : data.facts;
+                    areaJson.menu.push({name: menuItem.name, recipe: menuItem.recipe, tags: menuItem.tags, nutrition: facts});
                     numProcessed++;
                     if(numProcessed == total) {
                         res.json(full);
